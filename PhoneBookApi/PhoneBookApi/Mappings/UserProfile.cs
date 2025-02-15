@@ -11,7 +11,7 @@ namespace PhoneBookApi.Mappings
             // Настройка маппинга от сущности User к DTO UserDto
             CreateMap<User, UserDto>();
 
-            // Если нужно и обратное преобразование:
+            // Для обратного преобразования
             CreateMap<UserDto, User>();
         }
     }

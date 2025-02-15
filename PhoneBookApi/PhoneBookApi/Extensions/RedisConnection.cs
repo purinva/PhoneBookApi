@@ -5,21 +5,25 @@ namespace PhoneBookApi.Extensions
 {
     public static class RedisConnection
     {
-        public static void AddRedisConnection(this WebApplicationBuilder builder)
+        public static void AddRedisConnection(
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
-            // Получаем строку подключения Redis
-            var redisConnection = builder.Configuration.GetSection("Redis")["ConnectionString"];
+            // Получение строку подключения Redis
+            var redisConnection = configuration
+            .GetSection("Redis")["ConnectionString"];
 
-            // Проверяем на null или пустое значение
+            // Проверка на null или пустое значение
             if (string.IsNullOrEmpty(redisConnection))
             {
-                throw new ArgumentNullException("Redis connection string is missing in appsettings.json.");
+                throw new ArgumentNullException(
+                    "Redis connection string is missing in appsettings.json.");
             }
 
-            // Регистрируем подключение
-            builder.Services.AddSingleton<IConnectionMultiplexer>(
+            // Регистрация подключения
+            services.AddSingleton<IConnectionMultiplexer>(
                 ConnectionMultiplexer.Connect(redisConnection));
-            builder.Services.AddSingleton<RedisService>();
+            services.AddSingleton<RedisService>();
         }
     }
 }

@@ -8,16 +8,17 @@ namespace PhoneBookApi.Data
         public DbSet<User> Users { get; set; }
         public ApplicationDbContext(
             DbContextOptions<ApplicationDbContext> options) 
-            : base(options) { }
+            : base(options) 
+        { 
+            
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Конфигурация таблицы "Users"
             modelBuilder.Entity<User>()
                 .Property(u => u.Id)
                 .UseIdentityColumn(); // Использует автоинкремент
 
-            // Настройка свойств
             modelBuilder.Entity<User>()
                 .Property(u => u.Name)
                 .IsRequired()  // Поле обязательное (не может быть null)
@@ -33,7 +34,6 @@ namespace PhoneBookApi.Data
                 .IsRequired()  // Поле обязательное
                 .HasMaxLength(16);  // Максимальная длина номера телефона
 
-            // Уникальность PhoneNumber
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.PhoneNumber)  // Индекс на поле PhoneNumber
                 .IsUnique();  // Уникальный индекс, запрещает повторяющиеся номера

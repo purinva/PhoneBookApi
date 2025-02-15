@@ -26,7 +26,8 @@ public class FakeDataGenerator
         var faker = new Faker<User>("ru")
             .RuleFor(u => u.Name, f => f.Name.FirstName())
             .RuleFor(u => u.Surname, f => f.Name.LastName())
-            .RuleFor(u => u.PhoneNumber, f => $"+7({f.Random.Int(900, 999)}){f.Random.Int(100, 999)}-{f.Random.Int(10, 99)}-{f.Random.Int(10, 99)}");
+            .RuleFor(u => u.PhoneNumber, f => 
+                $"+7({f.Random.Int(900, 999)}){f.Random.Int(100, 999)}-{f.Random.Int(10, 99)}-{f.Random.Int(10, 99)}");
 
         return faker.Generate(count);
     }

@@ -3,7 +3,7 @@ using PhoneBookApi.Models;
 using PhoneBookApi.Repositories;
 using AutoMapper;
 using PhoneBookApi.ModelsDto;
-using PhoneBookApi.Services; // Подключаем RedisService
+using PhoneBookApi.Services;
 using System.Text.Json;
 
 namespace PhoneBookApi.Controllers
@@ -15,7 +15,7 @@ namespace PhoneBookApi.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly RedisService _redisService;
-        private readonly KafkaService _kafkaService; // Добавляем зависимость для Kafka
+        private readonly KafkaService _kafkaService;
 
         public UserController(IUserRepository userRepository,
             IMapper mapper, RedisService redisService, KafkaService kafkaService)
@@ -23,7 +23,7 @@ namespace PhoneBookApi.Controllers
             _userRepository = userRepository;
             _mapper = mapper;
             _redisService = redisService;
-            _kafkaService = kafkaService; // Инициализируем KafkaService
+            _kafkaService = kafkaService;
         }
 
         [HttpGet]
@@ -34,7 +34,6 @@ namespace PhoneBookApi.Controllers
 
             try
             {
-                // Проверяем кэш
                 var cachedUsers = await _redisService.GetAsync(cacheKey);
                 if (cachedUsers != null)
                 {
@@ -43,12 +42,10 @@ namespace PhoneBookApi.Controllers
                     return Ok(usersDto);
                 }
 
-                // Данные не найдены в кэше — получаем из базы
                 var users = await _userRepository.GetPaginatedAsync(
                     page, pageSize);
                 var userDtos = _mapper.Map<IEnumerable<UserDto>>(users);
 
-                // Сохраняем в кэше на 5 минут
                 await _redisService.SetAsync(
                     cacheKey, 
                     JsonSerializer.Serialize(userDtos), 
@@ -69,7 +66,6 @@ namespace PhoneBookApi.Controllers
 
             try
             {
-                // Проверяем кэш
                 var cachedUser = await _redisService.GetAsync(cacheKey);
                 if (cachedUser != null)
                 {
@@ -77,7 +73,6 @@ namespace PhoneBookApi.Controllers
                     return Ok(cacheduserDto);
                 }
 
-                // Получаем из базы
                 var user = await _userRepository.GetByIdAsync(id);
                 if (user == null)
                 {
@@ -86,7 +81,6 @@ namespace PhoneBookApi.Controllers
 
                 var userDto = _mapper.Map<UserDto>(user);
 
-                // Кэшируем на 10 минут
                 await _redisService.SetAsync(cacheKey, JsonSerializer.Serialize(userDto), TimeSpan.FromMinutes(10));
 
                 return Ok(userDto);
@@ -108,25 +102,23 @@ namespace PhoneBookApi.Controllers
 
             try
             {
-                // Нет необходимости присваивать ID, оно будет назначено автоматически
                 await _userRepository.AddAsync(user);
 
-                // Очистка кэша всех пользователей (списки)
                 await _redisService.ClearByPatternAsync("users_page_*");
 
                 var userDto = _mapper.Map<UserDto>(user);
 
-                // Отправляем сообщение в Kafka о создании пользователя
-                await _kafkaService.ProduceMessageAsync("user_updates", $"User created: {userDto.Name} {userDto.Surname}");
+                await _kafkaService.ProduceMessageAsync(
+                    "user_updates", $"User created: {userDto.Name} {userDto.Surname}");
 
-                return CreatedAtAction(nameof(GetById), new { id = user.Id }, userDto);
+                return CreatedAtAction(
+                    nameof(GetById), new { id = user.Id }, userDto);
             }
             catch (Exception ex)
             {
                 return Problem(detail: ex.Message);
             }
         }
-
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] User user)
@@ -149,12 +141,11 @@ namespace PhoneBookApi.Controllers
 
                 await _userRepository.UpdateAsync(existingUser);
 
-                // Удаляем кэш конкретного пользователя и список пользователей
                 await _redisService.DeleteAsync($"user_{id}");
                 await _redisService.ClearByPatternAsync("users_page_*");
 
-                // Отправляем сообщение в Kafka о том, что пользователь обновлен
-                await _kafkaService.ProduceMessageAsync("user_updates", $"User updated: {user.Name} {user.Surname}");
+                await _kafkaService.ProduceMessageAsync(
+                    "user_updates", $"User updated: {user.Name} {user.Surname}");
 
                 return NoContent();
             }
@@ -177,12 +168,11 @@ namespace PhoneBookApi.Controllers
 
                 await _userRepository.DeleteAsync(id);
 
-                // Удаляем кэш конкретного пользователя и список пользователей
                 await _redisService.DeleteAsync($"user_{id}");
                 await _redisService.ClearByPatternAsync("users_page_*");
 
-                // Отправляем сообщение в Kafka о том, что пользователь удален
-                await _kafkaService.ProduceMessageAsync("user_updates", $"User deleted: {user.Name} {user.Surname}");
+                await _kafkaService.ProduceMessageAsync(
+                    "user_updates", $"User deleted: {user.Name} {user.Surname}");
 
                 return NoContent();
             }

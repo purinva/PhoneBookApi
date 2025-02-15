@@ -5,9 +5,9 @@ namespace PhoneBookApi.Extensions
     public static class AutoMapperConnection
     {
         public static void AddAutoMapper(
-            this WebApplicationBuilder builder)
+            this IServiceCollection services)
         {
-            builder.Services.AddAutoMapper(
+            services.AddAutoMapper(
                 typeof(UserProfile)); // Добавляем профиль для маппинга
         }
     }

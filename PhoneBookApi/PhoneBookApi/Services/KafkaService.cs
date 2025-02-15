@@ -6,11 +6,11 @@ namespace PhoneBookApi.Services
     {
         private readonly string _bootstrapServers;
 
-        // Используем required для обязательного значения
         public KafkaService(IConfiguration configuration)
         {
             _bootstrapServers = configuration["Kafka:BootstrapServers"]
-                ?? throw new ArgumentNullException("Kafka bootstrap servers are not configured.");
+                ?? throw new ArgumentNullException(
+                    "Kafka bootstrap servers are not configured.");
         }
 
         public async Task ProduceMessageAsync(string topic, string message)
@@ -21,7 +21,8 @@ namespace PhoneBookApi.Services
             {
                 try
                 {
-                    var result = await producer.ProduceAsync(topic, new Message<Null, string> { Value = message });
+                    var result = await producer.ProduceAsync(
+                        topic, new Message<Null, string> { Value = message });
                     Console.WriteLine($"Message sent to topic {topic}: {result.Value}");
                 }
                 catch (ProduceException<Null, string> e)

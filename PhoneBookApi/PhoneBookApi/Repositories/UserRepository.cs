@@ -34,7 +34,6 @@ namespace PhoneBookApi.Repositories
                 throw new InvalidOperationException("Phone number is already taken.");
             }
 
-            // Добавляем нового пользователя
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
         }
